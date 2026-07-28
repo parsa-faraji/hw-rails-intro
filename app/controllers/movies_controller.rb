@@ -1,18 +1,29 @@
 class MoviesController < ApplicationController
-  before_action :set_movie, only: %i[ show edit update destroy ]
+  before_action :set_movie, only: %i[show edit update destroy]
+
+  SORTABLE_COLUMNS = %w[title release_date].freeze
 
   # GET /movies or /movies.json
   def index
-  @all_ratings = Movie.all_ratings
+    @all_ratings = Movie.all_ratings
 
-  if params[:ratings].present?
-    @ratings_to_show = params[:ratings].keys
-  else
-    @ratings_to_show = @all_ratings
+    @ratings_to_show =
+      if params[:ratings].present?
+        params[:ratings].keys
+      else
+        @all_ratings
+      end
+
+    @sort_by =
+      if SORTABLE_COLUMNS.include?(params[:sort_by])
+        params[:sort_by]
+      else
+        "title"
+      end
+
+    @movies = Movie.with_ratings(@ratings_to_show)
+                   .order(@sort_by => :asc)
   end
-
-  @movies = Movie.with_ratings(@ratings_to_show)
-  end 
 
   # GET /movies/1 or /movies/1.json
   def show
@@ -33,11 +44,21 @@ class MoviesController < ApplicationController
 
     respond_to do |format|
       if @movie.save
-        format.html { redirect_to @movie, notice: "Movie was successfully created." }
-        format.json { render :show, status: :created, location: @movie }
+        format.html do
+          redirect_to @movie, notice: "Movie was successfully created."
+        end
+
+        format.json do
+          render :show, status: :created, location: @movie
+        end
       else
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @movie.errors, status: :unprocessable_entity }
+        format.html do
+          render :new, status: :unprocessable_entity
+        end
+
+        format.json do
+          render json: @movie.errors, status: :unprocessable_entity
+        end
       end
     end
   end
@@ -46,11 +67,21 @@ class MoviesController < ApplicationController
   def update
     respond_to do |format|
       if @movie.update(movie_params)
-        format.html { redirect_to @movie, notice: "Movie was successfully updated." }
-        format.json { render :show, status: :ok, location: @movie }
+        format.html do
+          redirect_to @movie, notice: "Movie was successfully updated."
+        end
+
+        format.json do
+          render :show, status: :ok, location: @movie
+        end
       else
-        format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @movie.errors, status: :unprocessable_entity }
+        format.html do
+          render :edit, status: :unprocessable_entity
+        end
+
+        format.json do
+          render json: @movie.errors, status: :unprocessable_entity
+        end
       end
     end
   end
@@ -60,19 +91,30 @@ class MoviesController < ApplicationController
     @movie.destroy!
 
     respond_to do |format|
-      format.html { redirect_to movies_path, status: :see_other, notice: "Movie was successfully destroyed." }
+      format.html do
+        redirect_to movies_path,
+                    status: :see_other,
+                    notice: "Movie was successfully destroyed."
+      end
+
       format.json { head :no_content }
     end
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_movie
-      @movie = Movie.find(params[:id])
-    end
 
-    # Only allow a list of trusted parameters through.
-    def movie_params
-      params.require(:movie).permit(:title, :rating, :description, :release_date)
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_movie
+    @movie = Movie.find(params[:id])
+  end
+
+  # Only allow a list of trusted parameters through.
+  def movie_params
+    params.require(:movie).permit(
+      :title,
+      :rating,
+      :description,
+      :release_date
+    )
+  end
 end

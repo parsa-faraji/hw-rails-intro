@@ -1,36 +1,90 @@
-<!--  This file is app/views/movies/index.html.erb -->
+<!-- This file is app/views/movies/index.html.erb -->
+
 <p style="color: green"><%= notice %></p>
 
-<%#  Part 2: Start here... %>
-
 <h1>Movies</h1>
-<%= form_tag movies_path, method: :get, id: 'ratings_form', local: true do %>
-  Include:
 
-  <% @all_ratings.each do |rating| %>
-    <div class="form-check form-check-inline">
-      <%= check_box_tag "ratings[#{rating}]",
-                        "1",
-                        @ratings_to_show.include?(rating),
-                        class: 'form-check-input' %>
+<% ratings_hash = @ratings_to_show.index_with("1") %>
 
-      <%= label_tag "ratings[#{rating}]",
-                    rating,
-                    class: 'form-check-label' %>
-    </div>
-  <% end %>
+<%= form_tag movies_path,
+             method: :get,
+             id: "ratings_form",
+             local: true do %>
+  <div class="mb-3">
+    <strong>Include:</strong>
 
-  <%= submit_tag 'Refresh',
-                 id: 'ratings_submit',
-                 class: 'btn btn-primary' %>
+    <% @all_ratings.each do |rating| %>
+      <div class="form-check form-check-inline">
+        <%= check_box_tag "ratings[#{rating}]",
+                          "1",
+                          @ratings_to_show.include?(rating),
+                          id: "ratings_#{rating}",
+                          class: "form-check-input" %>
+
+        <%= label_tag "ratings_#{rating}",
+                      rating,
+                      class: "form-check-label" %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label me-2" for="sort_by">
+      Sort by:
+    </label>
+
+    <%= select_tag :sort_by,
+                   options_for_select(
+                     [
+                       ["Title", "title"],
+                       ["Release date", "release_date"]
+                     ],
+                     @sort_by
+                   ),
+                   id: "sort_by",
+                   class: "form-select d-inline w-auto" %>
+  </div>
+
+  <%= submit_tag "Refresh",
+                 id: "ratings_submit",
+                 class: "btn btn-primary" %>
 <% end %>
-<div id="movies">
-  <% @movies.each do |movie| %>
-    <%= render movie %>
-    <p>
-      <%= link_to "Show this movie", movie %>
-    </p>
-  <% end %>
-</div>
+
+<table class="table table-striped mt-4">
+  <thead>
+    <tr>
+      <th>
+        <%= link_to "Title",
+                    movies_path(
+                      sort_by: "title",
+                      ratings: ratings_hash
+                    ) %>
+      </th>
+
+      <th>Rating</th>
+
+      <th>
+        <%= link_to "Release Date",
+                    movies_path(
+                      sort_by: "release_date",
+                      ratings: ratings_hash
+                    ) %>
+      </th>
+
+      <th>Actions</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @movies.each do |movie| %>
+      <tr>
+        <td><%= movie.title %></td>
+        <td><%= movie.rating %></td>
+        <td><%= movie.release_date %></td>
+        <td><%= link_to "Show this movie", movie %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
 
 <%= link_to "New movie", new_movie_path %>
